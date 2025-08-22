@@ -2,6 +2,7 @@ import os
 import httpx
 from fastapi import FastAPI, Header, HTTPException, Depends, Request
 from fastapi.responses import Response
+import uvicorn
 
 app = FastAPI()
 
