@@ -1,8 +1,11 @@
 :{$PORT-80} {
 	@ok header X-API-Key {env.API_KEY}
 	handle @ok {
-		reverse_proxy {env.UPSTREAM}
+		reverse_proxy {env.UPSTREAM} {
+			header_up Host {host}
+			header_up X-Forwarded-Host {host}
+			header_up X-Forwarded-Proto https
+		}
 	}
-
 	respond "Unauthorized" 401
 }
