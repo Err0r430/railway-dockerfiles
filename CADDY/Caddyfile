@@ -3,12 +3,8 @@
         format json
     }
 
-    rewrite {
-        if {>X-API-Key} not {$API_KEY}
-        to /forbidden
-    }
-
-    respond /forbidden 403
+    @forbidden not header X-API-Key {$API_KEY}
+    respond @forbidden 403 "Forbidden"
 
     reverse_proxy {
         dynamic a {
