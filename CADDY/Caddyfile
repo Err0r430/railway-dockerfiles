@@ -1,6 +1,8 @@
-:{$PORT:80} {
-	@bad not header X-API-Key {$API_KEY}
-	respond @bad "Unauthorized" 401
+:{$PORT-80} {
+	@ok expression `env.API_KEY != '' && {http.request.header.X-API-Key} == env.API_KEY`
+	handle @ok {
+		reverse_proxy {env.UPSTREAM}
+	}
 
-	reverse_proxy {$UPSTREAM}
+	respond "Unauthorized" 401
 }
