@@ -1,11 +1,8 @@
-# Env: API_KEY, UPSTREAM, UPSTREAM_PORT, PORT (Railway)
+# Env: API_KEY, UPSTREAM, UPSTREAM_PORT, PORT
 :{$PORT} {
-	@ok {
-		header X-API-Key {$API_KEY}
-	}
-	@deny not @ok
+	@ok `{header.X-API-Key} == "{$API_KEY}"`
 
-	respond @deny 401 {
+	respond not @ok 401 {
 		body "Unauthorized"
 	}
 
