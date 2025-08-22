@@ -1,10 +1,8 @@
-# Env: API_KEY, UPSTREAM, UPSTREAM_PORT, PORT
 :{$PORT} {
 	@ok `{header.X-API-Key} == "{$API_KEY}"`
 
-	respond not @ok 401 {
-		body "Unauthorized"
-	}
+	# Inline form
+	respond not @ok "Unauthorized" 401
 
 	reverse_proxy @ok {$UPSTREAM}:{$UPSTREAM_PORT}
 }
