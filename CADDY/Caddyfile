@@ -1,0 +1,6 @@
+:{$PORT:80} {
+	@bad not header X-API-Key {$API_KEY}
+	respond @bad "Unauthorized" 401
+
+	reverse_proxy {$UPSTREAM}
+}
