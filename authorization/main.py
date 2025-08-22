@@ -31,3 +31,7 @@ async def proxy(path: str, request: Request, api_key: str = Depends(validate_api
         headers=dict(upstream_resp.headers),
         media_type=upstream_resp.headers.get("content-type")
     )
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
