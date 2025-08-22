@@ -1,16 +1,13 @@
-:433 {
-	# Require matching X-API-Key
-	@ok    header X-API-Key {$API_KEY}
-	@deny  not @ok
+# Env: API_KEY, UPSTREAM, UPSTREAM_PORT, PORT (Railway)
+:{$PORT} {
+	@ok {
+		header X-API-Key {$API_KEY}
+	}
+	@deny not @ok
 
 	respond @deny 401 {
 		body "Unauthorized"
 	}
 
-	# Proxy only when header matches
-	reverse_proxy @ok {$UPSTREAM_DOMAIN}:{$UPSTREAM_PORT} {
-		header_up X-Forwarded-Proto {scheme}
-		header_up X-Forwarded-Host  {host}
-		header_up X-Real-IP         {remote_host}
-	}
+	reverse_proxy @ok {$UPSTREAM}:{$UPSTREAM_PORT}
 }
