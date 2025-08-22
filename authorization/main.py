@@ -18,7 +18,7 @@ def validate_api_key(x_api_key: str = Header(...)):
 async def proxy(path: str, request: Request, api_key: str = Depends(validate_api_key)):
     body = await request.body()
     headers = dict(request.headers)
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=None) as client:
         upstream_resp = await client.request(
             request.method,
             f"{UPSTREAM_URL}/{path}",
