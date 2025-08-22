@@ -1,5 +1,5 @@
 :{$PORT-80} {
-	@ok expression `env.API_KEY != '' && {http.request.header.X-API-Key} == env.API_KEY`
+	@ok header X-API-Key {env.API_KEY}
 	handle @ok {
 		reverse_proxy {env.UPSTREAM}
 	}
