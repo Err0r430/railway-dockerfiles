@@ -1,8 +1,9 @@
 :{$PORT} {
 	@ok header X-API-Key {$API_KEY}
 
-	respond @ok "" 200
-	respond "Unauthorized" 401
+	handle @ok {
+		reverse_proxy {$UPSTREAM}:{$UPSTREAM_PORT}
+	}
 
-	reverse_proxy @ok {$UPSTREAM}:{$UPSTREAM_PORT}
+	respond "Unauthorized" 401
 }
