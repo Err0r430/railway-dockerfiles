@@ -21,6 +21,6 @@
     }
 
     handle /forbidden {
-        respond "Forbidden: Invalid API Key" 403
+        respond 403
     }
 }
