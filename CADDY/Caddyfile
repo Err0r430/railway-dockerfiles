@@ -1,11 +1,22 @@
-:{$PORT-80} {
-	@ok header X-API-Key {env.API_KEY}
-	handle @ok {
-		reverse_proxy {env.UPSTREAM} {
-			header_up Host {host}
-			header_up X-Forwarded-Host {host}
-			header_up X-Forwarded-Proto https
-		}
-	}
-	respond "Unauthorized" 401
+:{$PORT} {
+    log {
+        format json
+    }
+
+    rewrite {
+        if {>X-API-Key} not {$API_KEY}
+        to /forbidden
+    }
+
+    respond /forbidden 403
+
+    reverse_proxy {
+        dynamic a {
+            name {$UPSTREAM_DOMAIN}
+            port {$UPSTREAM_PORT}
+            refresh 1s
+            dial_timeout 30s
+            versions ipv4 ipv6
+        }
+    }
 }
