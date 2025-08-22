@@ -1,8 +1,7 @@
 :{$PORT} {
-	@ok `{header.X-API-Key} == "{$API_KEY}"`
+	@ok header X-API-Key {$API_KEY}
+	@fail not @ok
 
-	# Inline form
-	respond not @ok "Unauthorized" 401
-
+	respond @fail "Unauthorized" 401
 	reverse_proxy @ok {$UPSTREAM}:{$UPSTREAM_PORT}
 }
