@@ -1,12 +1,12 @@
 import os
 import httpx
-from fastapi import FastAPI, Header, HTTPException, Depends
+from fastapi import FastAPI, Header, HTTPException, Depends, Request
 from fastapi.responses import Response
 
 app = FastAPI()
 
-VALID_API_KEY = os.getenv("API_KEY")
-UPSTREAM_URL = os.getenv("UPSTREAM_URL")
+VALID_API_KEY = os.environ["API_KEY"]
+UPSTREAM_URL = os.environ["UPSTREAM_URL"]
 
 def validate_api_key(x_api_key: str = Header(...)):
     if x_api_key != VALID_API_KEY:
@@ -14,16 +14,20 @@ def validate_api_key(x_api_key: str = Header(...)):
     return x_api_key
 
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-async def proxy(path: str, api_key: str = Depends(validate_api_key), request: httpx.Request = None):
+async def proxy(path: str, request: Request, api_key: str = Depends(validate_api_key)):
+    body = await request.body()
+    headers = dict(request.headers)
     async with httpx.AsyncClient() as client:
-        req_method = request.method if request else "GET"
-        req_headers = dict(request.headers) if request else {}
-        req_content = await request.body() if request else None
         upstream_resp = await client.request(
-            req_method,
+            request.method,
             f"{UPSTREAM_URL}/{path}",
-            headers=req_headers,
-            content=req_content,
-            params=request.query_params if request else None
+            headers=headers,
+            content=body,
+            params=request.query_params
         )
-    return Response(content=upstream_resp.content, status_code=upstream_resp.status_code, headers=dict(upstream_resp.headers))
+    return Response(
+        content=upstream_resp.content,
+        status_code=upstream_resp.status_code,
+        headers=dict(upstream_resp.headers),
+        media_type=upstream_resp.headers.get("content-type")
+    )
