@@ -16,7 +16,13 @@
 	@ok header X-API-Key {$API_KEY}
 
 	handle @ok {
-		reverse_proxy {$UPSTREAM}:{$UPSTREAM_PORT}
+       	reverse_proxy {$UPSTREAM}:{$UPSTREAM_PORT} {
+      		transport http {
+     			response_header_timeout 0
+     			read_timeout 0
+     			dial_timeout 0
+      		}
+        }
 	}
 
 	respond "Unauthorized" 401
