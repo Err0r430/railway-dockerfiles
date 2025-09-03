@@ -1,29 +1,76 @@
 {
-	admin off # theres no need for the admin api in railway's environment
-	persist_config off # storage isn't persistent anyway
-	auto_https off # railway handles https for us, this could in some cases cause issues if left enabled
-	# runtime logs
+	# Railway-friendly defaults
+	admin off
+	persist_config off
+	auto_https off
+
+	# Helpful while debugging; comment out later
+	# debug
+
+	# Structured logs (Railway log UI friendly)
 	log {
-		format json # set runtime log format to json mode
+		format json
 	}
-	# server options
+
+	# Trust Railway proxy
 	servers {
-		trusted_proxies static private_ranges # trust railway's proxy
+		trusted_proxies static private_ranges
 	}
 }
 
+# Bind to the port Railway injects
 :{$PORT} {
-	@ok header X-API-Key {$API_KEY}
 
-	handle @ok {
-       	reverse_proxy {$UPSTREAM}:{$UPSTREAM_PORT} {
-      		transport http {
-     			response_header_timeout 0
-     			read_timeout 0
-     			dial_timeout 0
-      		}
-        }
+	encode gzip
+
+	# ---------------------------
+	# Health check (no auth)
+	# ---------------------------
+	@health path /health
+	respond @health 200
+
+	# ---------------------------
+	# CORS (adjust origins as needed)
+	# ---------------------------
+	@preflight method OPTIONS
+	header @preflight Access-Control-Allow-Origin "*"
+	header @preflight Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+	header @preflight Access-Control-Allow-Headers "Content-Type,Authorization,X-API-Key"
+	header @preflight Access-Control-Max-Age "86400"
+	respond @preflight 204
+
+	# For actual requests
+	header {
+		# If you know your domain(s), replace * with https://your-domain.com
+		Access-Control-Allow-Origin "*"
+		Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+		Access-Control-Allow-Headers "Content-Type,Authorization,X-API-Key"
 	}
 
-	respond "Unauthorized" 401
+	# ---------------------------
+	# API key protection
+	# - Lock only /v1/* (OpenAI-style) and /api/* (Ollama-style)
+	# ---------------------------
+	@apiPaths {
+		path /v1/* /api/*
+	}
+	@missingKey {
+		path /v1/* /api/*
+		not header X-API-Key {$API_KEY}
+	}
+	respond @missingKey "Unauthorized" 401
+
+	# ---------------------------
+	# Upstream reverse proxy
+	# ---------------------------
+	handle {
+		reverse_proxy {$UPSTREAM}:{$UPSTREAM_PORT} {
+			# Long-running streams
+			transport http {
+				response_header_timeout 0
+				read_timeout 0
+				dial_timeout 0
+			}
+		}
+	}
 }
